@@ -1,0 +1,620 @@
+<title>Reunion Table Booking</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bai+Jamjuree:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: mobile-first single column app; screen chips at top act as the presenter's map of S01–S07 */
+:root{
+  --bg:#eef2ef; --surface:#ffffff; --sunk:#f6f8f6; --ink:#14231c; --muted:#5a6b62; --line:#d6dfd9;
+  --brand:#1d5c45; --brand-ink:#ffffff; --brand-soft:#e1efe8; --accent:#a87a22; --accent-soft:#f6ecd6;
+  --ok:#1f7a4d; --ok-soft:#dff2e7; --warn:#995f00; --warn-soft:#fbefd6; --bad:#b0372e; --bad-soft:#f9e1de;
+  --scan:#0f1915; --scan-ink:#d5e6dc;
+  --f-display:"Bai Jamjuree","IBM Plex Sans Thai",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans Thai",system-ui,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+  --r:12px;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0e1612; --surface:#16211c; --sunk:#111a16; --ink:#e5eee9; --muted:#97a9a0; --line:#2a3a33;
+  --brand:#4fae86; --brand-ink:#0a1410; --brand-soft:#1b3328; --accent:#d8a948; --accent-soft:#3a2f17;
+  --ok:#5cc28a; --ok-soft:#173826; --warn:#e3ab45; --warn-soft:#3a2d12; --bad:#ee7a6f; --bad-soft:#3d1c19;
+  --scan:#070c0a; --scan-ink:#c9dcd1; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e1612; --surface:#16211c; --sunk:#111a16; --ink:#e5eee9; --muted:#97a9a0; --line:#2a3a33;
+  --brand:#4fae86; --brand-ink:#0a1410; --brand-soft:#1b3328; --accent:#d8a948; --accent-soft:#3a2f17;
+  --ok:#5cc28a; --ok-soft:#173826; --warn:#e3ab45; --warn-soft:#3a2d12; --bad:#ee7a6f; --bad-soft:#3d1c19;
+  --scan:#070c0a; --scan-ink:#c9dcd1; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:15px/1.6 var(--f-body);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 40px}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.wrap{max-width:880px;margin:0 auto}
+h1,h2,h3{font-family:var(--f-display);line-height:1.25;text-wrap:balance;margin:0}
+h2{font-size:1.35rem}
+h3{font-size:1.05rem}
+p{margin:0}
+.mono{font-family:var(--f-mono);font-size:.88em;letter-spacing:.02em}
+.muted{color:var(--muted)}
+.num{font-variant-numeric:tabular-nums}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* header */
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:12px 8px;border-bottom:1px solid var(--line)}
+.brandrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.brandrow h1{font-size:1.1rem}
+.badge-demo{font:600 .7rem/1 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;background:var(--accent-soft);color:var(--accent);padding:5px 8px;border-radius:6px}
+.brandrow .spacer{flex:1}
+.screens{display:flex;gap:6px;overflow-x:auto;margin-top:10px;padding-bottom:4px;scrollbar-width:thin}
+.chip{flex:none;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:5px 12px;cursor:pointer;display:flex;gap:6px;align-items:baseline;white-space:nowrap;font-size:.86rem}
+.chip b{font:600 .72rem var(--f-mono);color:var(--muted)}
+.chip .role{font-size:.7rem;color:var(--muted)}
+.chip[aria-current="page"]{background:var(--brand);color:var(--brand-ink);border-color:var(--brand)}
+.chip[aria-current="page"] b,.chip[aria-current="page"] .role{color:inherit;opacity:.8}
+
+main{padding-top:20px;display:grid;gap:16px}
+.screenhead{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.screenhead .sid{font:600 .75rem var(--f-mono);color:var(--accent);letter-spacing:.06em}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px}
+.stack{display:grid;gap:12px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+
+.btn{border:1px solid transparent;border-radius:10px;padding:10px 16px;font-weight:600;cursor:pointer;background:var(--brand);color:var(--brand-ink);display:inline-flex;gap:8px;align-items:center;justify-content:center}
+.btn:hover{filter:brightness(1.07)}
+.btn.ghost{background:transparent;border-color:var(--line);color:var(--ink)}
+.btn.accent{background:var(--accent);color:var(--brand-ink)}
+.btn.big{padding:14px 20px;font-size:1.05rem;width:100%}
+.btn:disabled{opacity:.45;cursor:not-allowed;filter:none}
+.btn.sm{padding:6px 10px;font-size:.84rem;border-radius:8px}
+
+.pill{display:inline-block;font-size:.76rem;font-weight:600;padding:2px 10px;border-radius:999px;white-space:nowrap}
+.pill.paid{background:var(--ok-soft);color:var(--ok)}
+.pill.pending{background:var(--warn-soft);color:var(--warn)}
+.pill.cancelled{background:var(--bad-soft);color:var(--bad)}
+
+/* home */
+.hero{background:var(--brand);color:var(--brand-ink);border-radius:16px;padding:24px 20px;display:grid;gap:14px;position:relative;overflow:hidden}
+.hero::after{content:"";position:absolute;right:-40px;top:-40px;width:180px;height:180px;border-radius:50%;border:22px solid currentColor;opacity:.07}
+.hero .school{font-size:.85rem;letter-spacing:.06em;opacity:.85}
+.hero h2{font-size:clamp(1.6rem,5vw,2.2rem)}
+.hero dl{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;margin:0}
+.hero dt{opacity:.75}
+.hero dd{margin:0;font-weight:500}
+.hero .btn{background:var(--brand-ink);color:var(--brand)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px}
+.stat .v{font:700 1.6rem/1.1 var(--f-display);font-variant-numeric:tabular-nums}
+.stat .k{font-size:.8rem;color:var(--muted)}
+.steps{list-style:none;padding:0;margin:0;display:grid;gap:8px;counter-reset:s}
+.steps li{counter-increment:s;display:flex;gap:10px;align-items:baseline}
+.steps li::before{content:counter(s);font:600 .78rem var(--f-mono);background:var(--brand-soft);color:var(--brand);width:22px;height:22px;border-radius:50%;display:inline-grid;place-items:center;flex:none}
+
+/* tables */
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:.82rem;color:var(--muted)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:middle}
+.tgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px;text-align:left;cursor:pointer;display:grid;gap:8px}
+.tile:hover:not(:disabled){border-color:var(--brand)}
+.tile[aria-pressed="true"]{border-color:var(--brand);box-shadow:0 0 0 2px var(--brand) inset}
+.tile:disabled{cursor:not-allowed;background:var(--sunk)}
+.tile .tno{font:700 1.15rem var(--f-display)}
+.tile .left{font-size:.82rem;color:var(--muted)}
+.tile:disabled .left{color:var(--bad);font-weight:600}
+.seats{display:grid;grid-template-columns:repeat(10,1fr);gap:3px}
+.seats i{aspect-ratio:1;border-radius:50%;background:var(--line);max-width:100%}
+.seats i.p{background:var(--ok)}
+.seats i.w{background:var(--accent)}
+
+/* form */
+.field{display:grid;gap:5px}
+.field label{font-weight:600;font-size:.9rem}
+.field input,.field select{border:1px solid var(--line);background:var(--sunk);border-radius:10px;padding:10px 12px;width:100%}
+.field .hint{font-size:.8rem;color:var(--muted)}
+.field.err input{border-color:var(--bad)}
+.field .errmsg{font-size:.82rem;color:var(--bad)}
+.stepper{display:flex;align-items:center;gap:8px}
+.stepper input{text-align:center;width:80px;font:700 1.2rem var(--f-display)}
+.stepper .btn{width:44px;height:44px;padding:0;font-size:1.3rem}
+.selbox{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;background:var(--brand-soft);border-radius:10px;padding:10px 14px}
+
+dl.kv{display:grid;grid-template-columns:auto 1fr;gap:6px 16px;margin:0}
+dl.kv dt{color:var(--muted)}
+dl.kv dd{margin:0;font-weight:500;min-width:0;overflow-wrap:anywhere}
+.amount{font:700 2rem var(--f-display);font-variant-numeric:tabular-nums}
+.adminbox{border:1px dashed var(--accent);background:var(--accent-soft);border-radius:var(--r);padding:14px;display:grid;gap:10px}
+.adminbox .tag{font:600 .72rem var(--f-mono);letter-spacing:.06em;color:var(--accent);text-transform:uppercase}
+
+/* ticket */
+.ticket{background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden;max-width:420px;width:100%;margin:0 auto}
+.ticket .th{background:var(--brand);color:var(--brand-ink);padding:16px 18px}
+.ticket .th small{opacity:.8}
+.ticket .tb{padding:18px;display:grid;gap:14px;justify-items:center}
+.perf{border-top:2px dashed var(--line);margin:0 -18px;width:calc(100% + 36px)}
+.qrwrap{position:relative;background:#fff;padding:12px;border-radius:12px;border:1px solid var(--line)}
+.qrwrap .qr{width:200px;height:200px;max-width:100%}
+.qrwrap .qr img,.qrwrap .qr canvas{width:100%!important;height:auto!important;display:block}
+.qrwrap.locked .qr{filter:blur(7px);opacity:.5}
+.qrwrap .lock{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:16px;color:#5a4000;font-weight:600;font-size:.9rem}
+.qrwrap .lock span{background:#fbefd6;border-radius:10px;padding:8px 12px}
+.ticket .kv{width:100%}
+.meter{width:100%;display:grid;gap:6px}
+.bar{height:10px;border-radius:999px;background:var(--line);overflow:hidden}
+.bar>i{display:block;height:100%;background:var(--ok);border-radius:999px}
+.token{display:flex;gap:8px;align-items:center;width:100%;background:var(--sunk);border-radius:8px;padding:8px 10px}
+.token code{flex:1;min-width:0;overflow-wrap:anywhere;font-family:var(--f-mono);font-size:.82rem}
+
+/* scanner */
+.scanner{background:var(--scan);color:var(--scan-ink);border-radius:16px;padding:18px;display:grid;gap:14px}
+.vf{position:relative;aspect-ratio:4/3;max-width:100%;border-radius:12px;background:repeating-linear-gradient(45deg,rgba(255,255,255,.025) 0 10px,transparent 10px 20px);display:grid;place-items:center;text-align:center;padding:24px;font-size:.88rem;overflow:hidden}
+.vf .corner{position:absolute;width:34px;height:34px;border:3px solid #6fd3a2}
+.vf .c1{top:14px;left:14px;border-right:0;border-bottom:0}
+.vf .c2{top:14px;right:14px;border-left:0;border-bottom:0}
+.vf .c3{bottom:14px;left:14px;border-right:0;border-top:0}
+.vf .c4{bottom:14px;right:14px;border-left:0;border-top:0}
+.vf .laser{position:absolute;left:10%;right:10%;height:2px;background:#6fd3a2;box-shadow:0 0 12px #6fd3a2;top:20%;animation:scan 2.4s ease-in-out infinite alternate}
+@keyframes scan{to{top:80%}}
+@media (prefers-reduced-motion:reduce){.vf .laser{animation:none;top:50%}}
+.scanner input{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);border-radius:10px;padding:10px 12px;flex:1;min-width:0;color:var(--scan-ink);font-family:var(--f-mono);font-size:.85rem}
+.scanner .row{flex-wrap:nowrap}
+.picks{display:flex;gap:6px;flex-wrap:wrap}
+.picks button{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.16);color:var(--scan-ink);border-radius:8px;padding:5px 10px;font-size:.8rem;cursor:pointer}
+.picks button:hover{background:rgba(255,255,255,.14)}
+.result{border-radius:var(--r);padding:16px;display:grid;gap:12px;border:1px solid var(--line);background:var(--surface)}
+.result.warn{background:var(--warn-soft);border-color:transparent}
+.result.bad{background:var(--bad-soft);border-color:transparent}
+.trio{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center}
+.trio div{background:var(--sunk);border-radius:10px;padding:10px 4px}
+.trio .v{font:700 1.8rem/1.1 var(--f-display);font-variant-numeric:tabular-nums}
+.trio .k{font-size:.78rem;color:var(--muted)}
+.trio .rem .v{color:var(--ok)}
+.msg{border-radius:10px;padding:10px 12px;font-weight:600;font-size:.9rem}
+.msg.ok{background:var(--ok-soft);color:var(--ok)}
+.msg.warn{background:var(--warn-soft);color:var(--warn)}
+.msg.bad{background:var(--bad-soft);color:var(--bad)}
+.req{font-size:.76rem;color:var(--muted)}
+
+/* admin + dashboard */
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.88rem}
+th,td{padding:9px 12px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap}
+th{font-size:.76rem;color:var(--muted);font-weight:600;background:var(--sunk)}
+tr:last-child td{border-bottom:0}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+.minibar{width:80px;height:6px;border-radius:999px;background:var(--line);overflow:hidden;display:inline-block;vertical-align:middle}
+.minibar i{display:block;height:100%;background:var(--ok)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.kpis .stat .v small{font-size:.9rem;color:var(--muted);font-weight:500}
+.tmap{display:grid;grid-template-columns:repeat(10,1fr);gap:6px}
+@media (max-width:560px){.tmap{grid-template-columns:repeat(5,1fr)}}
+.tm{border-radius:8px;border:1px solid var(--line);padding:6px 4px;text-align:center;font-size:.72rem;position:relative;overflow:hidden;background:var(--surface)}
+.tm .f{position:absolute;inset:auto 0 0 0;background:var(--brand-soft)}
+.tm span{position:relative}
+.tm b{display:block;font:600 .85rem var(--f-display)}
+.log{list-style:none;padding:0;margin:0;display:grid;gap:6px;font-size:.86rem}
+.log li{display:flex;gap:10px;justify-content:space-between;border-bottom:1px solid var(--line);padding-bottom:6px}
+.log li:last-child{border-bottom:0}
+
+.notice{font-size:.84rem;color:var(--muted);background:var(--sunk);border-radius:10px;padding:10px 12px}
+details.guide{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 16px}
+details.guide summary{cursor:pointer;font-weight:600;font-family:var(--f-display)}
+details.guide ol{margin:10px 0 0;padding-left:20px;display:grid;gap:6px;font-size:.9rem}
+footer{margin-top:24px;display:grid;gap:12px}
+
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%) translateY(20px);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-weight:600;font-size:.9rem;opacity:0;pointer-events:none;transition:.2s;max-width:calc(100% - 32px);z-index:20}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.empty{text-align:center;padding:28px 16px;color:var(--muted);display:grid;gap:12px;justify-items:center}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brandrow">
+      <h1>Reunion Table Booking</h1>
+      <span class="badge-demo">Demo / Prototype</span>
+      <span class="spacer"></span>
+    </div>
+    <nav class="screens" id="nav" aria-label="หน้าจอสาธิต"></nav>
+  </header>
+  <main id="view"></main>
+  <footer>
+    <details class="guide">
+      <summary>ลำดับสาธิต 3–5 นาที (ตาม Acceptance Criteria)</summary>
+      <ol>
+        <li>S02 ดูโต๊ะ 01: Group A จอง 5 + Group B จอง 5 = เต็ม 10 ที่ ลองเลือกโต๊ะ 01 จะกดไม่ได้</li>
+        <li>S03 สร้าง Group ใหม่ที่โต๊ะอื่น → S04 สถานะ Pending → ที่ S05 QR ยังล็อกอยู่</li>
+        <li>S06 สแกน QR ของ Group B (Pending): ระบบปฏิเสธการเช็กอิน</li>
+        <li>S04 กด “ยืนยันชำระเงิน (Demo)” → QR เปิดใช้งาน</li>
+        <li>S06 สแกน Group A แล้วกด Confirm +1 จนครบ 5 ครั้ง ครั้งที่ 6 ถูกปฏิเสธ</li>
+        <li>กด “ส่งซ้ำด้วย requestId เดิม” หรือ “อ่าน QR ซ้ำ”: ยอดไม่เพิ่ม</li>
+        <li>S07 Dashboard: ยอดเข้างานคำนวณจาก Check-in Log เท่านั้น</li>
+      </ol>
+    </details>
+    <div class="row">
+      <button class="btn ghost sm" id="resetSeed" type="button">รีเซ็ตเป็นข้อมูลตัวอย่าง</button>
+      <button class="btn ghost sm" id="resetEmpty" type="button">เริ่มใหม่แบบไม่มีการจอง</button>
+    </div>
+    <p class="notice">ต้นแบบสำหรับนำเสนอเท่านั้น ไม่มีการรับชำระเงินจริง ปุ่ม Admin ไม่มีการตรวจสิทธิ์ ข้อมูลเก็บในเบราว์เซอร์เครื่องนี้เท่านั้น (เวอร์ชัน Dev จะใช้ Supabase เพื่อให้หลายอุปกรณ์เห็นข้อมูลเดียวกัน) ชื่อโรงเรียนและรายชื่อทั้งหมดเป็นข้อมูลสมมติ</p>
+  </footer>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+const KEY = 'reunion-demo-v1';
+const SCREENS = [
+  {id:'home', sid:'S01', name:'Home', role:'Guest'},
+  {id:'tables', sid:'S02', name:'เลือกโต๊ะ', role:'Guest'},
+  {id:'form', sid:'S03', name:'สร้าง Group', role:'Guest'},
+  {id:'payment', sid:'S04', name:'ชำระเงิน', role:'Guest/Admin'},
+  {id:'ticket', sid:'S05', name:'Group Ticket', role:'Guest'},
+  {id:'staff', sid:'S06', name:'สแกนเช็กอิน', role:'Staff'},
+  {id:'dashboard', sid:'S07', name:'Dashboard', role:'Admin'},
+  {id:'bookings', sid:'ADM', name:'รายการจอง', role:'Admin'},
+];
+
+function token(){
+  const a = new Uint8Array(12); crypto.getRandomValues(a);
+  const abc = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  return 'RTB-' + Array.from(a, b => abc[b % 32]).join('');
+}
+function rid(){ return 'req_' + Math.random().toString(36).slice(2, 10); }
+
+function seed(withBookings){
+  const s = {
+    event:{school:'โรงเรียนตัวอย่างวิทยาคม', name:'งานคืนสู่เหย้า ศิษย์เก่ารุ่น 2529', date:'เสาร์ 19 ธันวาคม 2569', time:'18:00–22:00 น.', venue:'หอประชุมโรงเรียน', price:1500},
+    tables:Array.from({length:20},(_,i)=>({id:'t'+(i+1), no:i+1, cap:10})),
+    bookings:[], logs:[], seq:0
+  };
+  if(!withBookings) return s;
+  const add = (group, contact, phone, tableNo, seats, status, checked) => {
+    const b = {id:'b'+(++s.seq), code:'RB-'+String(s.seq).padStart(4,'0'), group, contact, phone, tableId:'t'+tableNo, seats, status, token:token(), createdAt:Date.now()};
+    s.bookings.push(b);
+    for(let i=0;i<checked;i++) s.logs.push({id:'l'+s.logs.length, bookingId:b.id, staff:'staff-demo', at:`19/12 18:${String(5+i*4+s.seq).padStart(2,'0')}`, requestId:rid()});
+  };
+  add('Group A · ห้อง ม.6/1','สมชาย ใจดี','081-234-5678',1,5,'paid',3);
+  add('Group B · ห้อง ม.6/3','วิภาวรรณ สุขสันต์','089-111-2233',1,5,'pending',0);
+  add('ทีมฟุตบอลโรงเรียน','ประเสริฐ มั่นคง','086-555-1020',3,10,'paid',6);
+  add('ชมรมดนตรีไทย','กาญจนา ศรีทอง','092-404-7788',5,4,'pending',0);
+  add('ห้อง ม.6/5','อนุชา วงศ์ใหญ่','084-909-3311',7,6,'paid',2);
+  add('ห้อง ม.6/2','นงลักษณ์ พรหมมา','083-321-6543',2,8,'paid',0);
+  return s;
+}
+
+let S;
+try { S = JSON.parse(localStorage.getItem(KEY)) } catch(e) {}
+if(!S || !S.tables) S = seed(true);
+function save(){ try { localStorage.setItem(KEY, JSON.stringify(S)) } catch(e) {} }
+
+const ui = {view:'home', tableId:null, bookingId:'b1', scan:null, errs:{}, refreshedAt:null};
+
+const $ = s => document.querySelector(s);
+const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pad2 = n => String(n).padStart(2,'0');
+const baht = n => '฿' + n.toLocaleString('th-TH');
+const tableOf = id => S.tables.find(t => t.id === id);
+const bookingOf = id => S.bookings.find(b => b.id === id);
+const active = () => S.bookings.filter(b => b.status !== 'cancelled');
+const taken = tid => active().filter(b => b.tableId === tid).reduce((a,b) => a + b.seats, 0);
+const usedOf = bid => S.logs.filter(l => l.bookingId === bid).length;
+const STATUS = {paid:'Paid', pending:'Pending', cancelled:'Cancelled'};
+const pill = st => `<span class="pill ${st}">${STATUS[st]}</span>`;
+
+function toast(msg){
+  const t = $('#toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toast.h); toast.h = setTimeout(() => t.classList.remove('show'), 2200);
+}
+function go(view){ ui.view = view; render(); window.scrollTo({top:0}); }
+
+/* ---------- server-like actions (mirror of the API in spec §8) ---------- */
+function createBooking({group, contact, phone, tableId, seats}){
+  const t = tableOf(tableId);
+  if(taken(tableId) + seats > t.cap) return {ok:false, error:`โต๊ะ ${pad2(t.no)} เหลือ ${t.cap - taken(tableId)} ที่ จองเพิ่ม ${seats} ที่ไม่ได้`};
+  const b = {id:'b'+(++S.seq), code:'RB-'+String(S.seq).padStart(4,'0'), group, contact, phone, tableId, seats, status:'pending', token:token(), createdAt:Date.now()};
+  S.bookings.push(b); save();
+  return {ok:true, booking:b};
+}
+function setStatus(bid, status){ const b = bookingOf(bid); if(b){ b.status = status; save(); } }
+function resolveQr(tok){
+  const b = S.bookings.find(x => x.token === tok.trim());
+  if(!b) return {ok:false, code:'NOT_FOUND'};
+  const used = usedOf(b.id);
+  return {ok:true, booking:b, total:b.seats, used, remaining:b.seats - used};
+}
+// Atomic in the real build: idempotency check + quota check + insert in one transaction
+function confirmCheckin(tok, requestId){
+  const b = S.bookings.find(x => x.token === tok);
+  if(!b) return {ok:false, code:'NOT_FOUND'};
+  const dup = S.logs.find(l => l.requestId === requestId);
+  const used = usedOf(b.id);
+  if(dup) return {ok:false, code:'DUPLICATE', used, remaining:b.seats - used};
+  if(b.status !== 'paid') return {ok:false, code:b.status === 'cancelled' ? 'CANCELLED' : 'NOT_PAID', used, remaining:b.seats - used};
+  if(used >= b.seats) return {ok:false, code:'QUOTA_FULL', used, remaining:0};
+  const d = new Date();
+  S.logs.push({id:'l'+S.logs.length, bookingId:b.id, staff:'staff-demo', at:`${pad2(d.getDate())}/${pad2(d.getMonth()+1)} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`, requestId});
+  save();
+  return {ok:true, used:used+1, remaining:b.seats - used - 1};
+}
+
+/* ---------- views ---------- */
+function head(id, title, sub){
+  const s = SCREENS.find(x => x.id === id);
+  return `<div class="screenhead"><span class="sid">${s.sid} · ${s.role}</span></div><div class="stack" style="gap:4px"><h2>${title}</h2>${sub ? `<p class="muted">${sub}</p>` : ''}</div>`;
+}
+
+const V = {};
+V.home = () => {
+  const e = S.event, tot = S.tables.length * 10, bookedSeats = active().reduce((a,b)=>a+b.seats,0);
+  const freeTables = S.tables.filter(t => taken(t.id) < t.cap).length;
+  return `
+  <section class="hero">
+    <div class="school">${esc(e.school)}</div>
+    <h2>${esc(e.name)}</h2>
+    <dl><dt>วันที่</dt><dd>${esc(e.date)}</dd><dt>เวลา</dt><dd>${esc(e.time)}</dd><dt>สถานที่</dt><dd>${esc(e.venue)}</dd><dt>ราคา</dt><dd>${baht(e.price)} / ที่นั่ง</dd></dl>
+    <div><button class="btn big" data-go="tables">เริ่มจองโต๊ะ</button></div>
+  </section>
+  <div class="stats">
+    <div class="stat"><div class="v">${freeTables}<span class="muted" style="font-size:.9rem;font-weight:500"> / ${S.tables.length}</span></div><div class="k">โต๊ะที่ยังมีที่ว่าง</div></div>
+    <div class="stat"><div class="v">${tot - bookedSeats}</div><div class="k">ที่นั่งคงเหลือ จาก ${tot}</div></div>
+    <div class="stat"><div class="v">10</div><div class="k">ที่นั่งต่อโต๊ะ · หลาย Group นั่งร่วมได้</div></div>
+  </div>
+  <div class="card stack">
+    <h3>ขั้นตอนการจอง</h3>
+    <ol class="steps">
+      <li>เลือกโต๊ะและดูที่นั่งคงเหลือ</li>
+      <li>กรอกชื่อกลุ่ม ผู้ติดต่อ และจำนวนคน</li>
+      <li>ชำระเงิน รอเจ้าหน้าที่ยืนยันยอด</li>
+      <li>รับ Group QR ใช้เช็กอินหน้างานได้ตามจำนวนสิทธิ์</li>
+    </ol>
+  </div>`;
+};
+
+V.tables = () => {
+  const tiles = S.tables.map(t => {
+    const bs = active().filter(b => b.tableId === t.id);
+    const dots = [];
+    bs.forEach(b => { for(let i=0;i<b.seats;i++) dots.push(b.status === 'paid' ? 'p' : 'w'); });
+    while(dots.length < t.cap) dots.push('');
+    const left = t.cap - taken(t.id);
+    return `<button type="button" class="tile" data-table="${t.id}" ${left<=0?'disabled':''} aria-pressed="${ui.tableId===t.id}">
+      <span class="row" style="justify-content:space-between"><span class="tno">โต๊ะ ${pad2(t.no)}</span><span class="muted" style="font-size:.78rem">${bs.length} กลุ่ม</span></span>
+      <span class="seats">${dots.map(d=>`<i class="${d}"></i>`).join('')}</span>
+      <span class="left num">${left<=0 ? 'เต็มแล้ว' : `ว่าง ${left} / ${t.cap} ที่`}</span>
+    </button>`;
+  }).join('');
+  return `${head('tables','เลือกโต๊ะ','โต๊ะละ 10 ที่นั่ง หลาย Group จองโต๊ะเดียวกันได้ จนกว่าที่นั่งรวมจะเต็ม')}
+  <div class="legend"><span><i style="background:var(--ok)"></i>ชำระแล้ว</span><span><i style="background:var(--accent)"></i>รอชำระ</span><span><i style="background:var(--line)"></i>ว่าง</span></div>
+  <div class="tgrid">${tiles}</div>`;
+};
+
+V.form = () => {
+  const t = ui.tableId && tableOf(ui.tableId);
+  if(!t) return `${head('form','สร้าง Group Booking')}<div class="card empty"><p>ยังไม่ได้เลือกโต๊ะ</p><button class="btn" data-go="tables">ไปเลือกโต๊ะ</button></div>`;
+  const left = t.cap - taken(t.id), f = ui.draft || {group:'',contact:'',phone:'',seats:Math.min(5,left)};
+  const err = ui.errs;
+  const fld = (id,label,val,type,hint,ph) => `<div class="field ${err[id]?'err':''}"><label for="f_${id}">${label}</label><input id="f_${id}" name="${id}" type="${type}" value="${esc(val)}" placeholder="${ph||''}" autocomplete="off">${err[id]?`<span class="errmsg">${err[id]}</span>`:hint?`<span class="hint">${hint}</span>`:''}</div>`;
+  return `${head('form','สร้าง Group Booking','หัวหน้ากลุ่มกรอกครั้งเดียว ได้ QR เดียวใช้เช็กอินทั้งกลุ่ม')}
+  <div class="selbox"><span><b>โต๊ะ ${pad2(t.no)}</b> · ว่าง ${left} / ${t.cap} ที่</span><button class="btn ghost sm" data-go="tables" type="button">เปลี่ยนโต๊ะ</button></div>
+  <form class="card stack" id="bookForm" novalidate>
+    ${fld('group','ชื่อกลุ่ม',f.group,'text','ชื่อที่จะแสดงบนตั๋วและหน้าจอเจ้าหน้าที่','เช่น ห้อง ม.6/4')}
+    ${fld('contact','ชื่อผู้ติดต่อ',f.contact,'text','','ชื่อ-นามสกุล')}
+    ${fld('phone','โทรศัพท์',f.phone,'tel','ใช้ติดต่อกลับเท่านั้น ไม่ถูกใส่ลงใน QR','08x-xxx-xxxx')}
+    <div class="field ${err.seats?'err':''}"><label for="f_seats">จำนวนคน</label>
+      <div class="stepper"><button class="btn ghost" type="button" data-step="-1" aria-label="ลดจำนวน">−</button><input id="f_seats" name="seats" type="number" min="1" max="${left}" value="${f.seats}" inputmode="numeric"><button class="btn ghost" type="button" data-step="1" aria-label="เพิ่มจำนวน">+</button></div>
+      ${err.seats?`<span class="errmsg">${err.seats}</span>`:`<span class="hint">สูงสุด ${left} คนสำหรับโต๊ะนี้ · ยอดชำระ <b id="sum">${baht(f.seats*S.event.price)}</b></span>`}
+    </div>
+    <button class="btn big" type="submit">บันทึก Booking</button>
+  </form>`;
+};
+
+function bookingPicker(filter){
+  const list = S.bookings.filter(filter || (()=>true));
+  return `<div class="field"><label for="pick">Booking ที่แสดง</label><select id="pick">${list.map(b=>`<option value="${b.id}" ${b.id===ui.bookingId?'selected':''}>${b.code} · ${esc(b.group)} · ${STATUS[b.status]}</option>`).join('')}</select></div>`;
+}
+
+V.payment = () => {
+  const b = bookingOf(ui.bookingId);
+  if(!b) return `${head('payment','ชำระเงิน')}<div class="card empty"><p>ยังไม่มี Booking</p><button class="btn" data-go="tables">เริ่มจอง</button></div>`;
+  const t = tableOf(b.tableId);
+  return `${head('payment','ชำระเงิน','ต้นแบบนี้ไม่รับเงินจริง สถานะเปลี่ยนเป็น Paid เมื่อ Admin กดยืนยันเท่านั้น')}
+  ${bookingPicker()}
+  <div class="card stack">
+    <div class="row" style="justify-content:space-between"><span class="mono">${b.code}</span>${pill(b.status)}</div>
+    <div><div class="muted">ยอดที่ต้องชำระ</div><div class="amount">${baht(b.seats*S.event.price)}</div><div class="muted num">${b.seats} ที่นั่ง × ${baht(S.event.price)}</div></div>
+    <dl class="kv"><dt>กลุ่ม</dt><dd>${esc(b.group)}</dd><dt>โต๊ะ</dt><dd>${pad2(t.no)}</dd><dt>ผู้ติดต่อ</dt><dd>${esc(b.contact)} · ${esc(b.phone)}</dd></dl>
+    ${b.status==='pending' ? `<p class="notice">ช่องทางชำระเงินจริง (โอน/ตรวจสลิป) อยู่ในระยะ Production · ขณะนี้รอเจ้าหน้าที่ยืนยันยอด QR ยังใช้เช็กอินไม่ได้</p>` : ''}
+    ${b.status==='paid' ? `<button class="btn big" data-go="ticket">ดู Group Ticket</button>` : ''}
+  </div>
+  <div class="adminbox">
+    <span class="tag">Admin · Demo only</span>
+    <p>จำลองการตรวจยอดของเจ้าหน้าที่ เมื่อยืนยันแล้ว QR ของกลุ่มนี้จะเปิดใช้งาน</p>
+    <div class="row">
+      ${b.status!=='paid' && b.status!=='cancelled' ? `<button class="btn accent" data-pay="${b.id}">ยืนยันชำระเงิน (Demo)</button>` : ''}
+      ${b.status==='paid' ? `<button class="btn ghost" data-unpay="${b.id}">ย้อนเป็น Pending</button>` : ''}
+      ${b.status==='cancelled' ? `<span class="muted">Booking นี้ถูกยกเลิกแล้ว</span>` : ''}
+    </div>
+  </div>`;
+};
+
+V.ticket = () => {
+  const b = bookingOf(ui.bookingId);
+  if(!b) return `${head('ticket','Group Ticket')}<div class="card empty"><p>ยังไม่มี Booking</p><button class="btn" data-go="tables">เริ่มจอง</button></div>`;
+  const t = tableOf(b.tableId), used = usedOf(b.id), paid = b.status === 'paid';
+  return `${head('ticket','Group Ticket','QR เดียวต่อกลุ่ม สแกนซ้ำได้จนกว่าจะเช็กอินครบจำนวนสิทธิ์')}
+  ${bookingPicker(x => x.status !== 'cancelled')}
+  <article class="ticket">
+    <div class="th"><small>${esc(S.event.school)}</small><h3>${esc(S.event.name)}</h3><small>${esc(S.event.date)} · ${esc(S.event.time)}</small></div>
+    <div class="tb">
+      <div class="row" style="justify-content:space-between;width:100%"><span class="mono">${b.code}</span>${pill(b.status)}</div>
+      <div class="qrwrap ${paid?'':'locked'}"><div class="qr" id="qr"></div>${paid?'':`<div class="lock"><span>QR ยังไม่เปิดใช้งาน<br>รอยืนยันการชำระเงิน</span></div>`}</div>
+      <div class="perf"></div>
+      <dl class="kv"><dt>กลุ่ม</dt><dd>${esc(b.group)}</dd><dt>โต๊ะ</dt><dd>${pad2(t.no)}</dd><dt>สิทธิ์เข้างาน</dt><dd class="num">${b.seats} คน</dd></dl>
+      <div class="meter"><div class="row" style="justify-content:space-between"><span>เช็กอินแล้ว</span><b class="num">${used} / ${b.seats}</b></div><div class="bar"><i style="width:${used/b.seats*100}%"></i></div></div>
+      <div class="token"><code>${b.token}</code><button class="btn ghost sm" type="button" data-copy="${b.token}">คัดลอก</button></div>
+      <p class="muted" style="font-size:.8rem;text-align:center">QR เก็บเฉพาะ Token สุ่ม ไม่มีชื่อหรือเบอร์โทร</p>
+    </div>
+  </article>
+  ${paid ? '' : `<button class="btn ghost" data-go="payment">ไปหน้าชำระเงิน</button>`}`;
+};
+
+V.staff = () => {
+  const sc = ui.scan;
+  let res = '';
+  if(sc){
+    const r = resolveQr(sc.token);
+    if(!r.ok) res = `<div class="result bad"><h3>ไม่พบ QR นี้ในระบบ</h3><p>ตรวจว่าเป็น QR ของงานนี้ หรือให้แขกเปิดตั๋วใหม่อีกครั้ง</p></div>`;
+    else {
+      const b = r.booking, t = tableOf(b.tableId), cls = b.status==='paid' ? '' : b.status==='pending' ? 'warn' : 'bad';
+      const logs = S.logs.filter(l => l.bookingId === b.id).slice(-5).reverse();
+      res = `<div class="result ${cls}">
+        <div class="row" style="justify-content:space-between"><div><h3>${esc(b.group)}</h3><span class="muted">${b.code} · โต๊ะ ${pad2(t.no)}</span></div>${pill(b.status)}</div>
+        <div class="trio"><div><div class="v">${r.total}</div><div class="k">สิทธิ์รวม</div></div><div><div class="v">${r.used}</div><div class="k">ใช้แล้ว</div></div><div class="rem"><div class="v">${r.remaining}</div><div class="k">คงเหลือ</div></div></div>
+        ${sc.msg ? `<div class="msg ${sc.msg.k}">${sc.msg.t}</div>` : ''}
+        ${b.status==='pending' ? `<div class="msg warn">ยังไม่ชำระเงิน เช็กอินไม่ได้</div>` : ''}
+        ${b.status==='cancelled' ? `<div class="msg bad">Booking ถูกยกเลิก เช็กอินไม่ได้</div>` : ''}
+        <button class="btn big" id="confirm" ${b.status!=='paid'?'disabled':''}>${r.remaining<=0 && b.status==='paid' ? 'สิทธิ์ครบแล้ว · ลอง Confirm' : 'Confirm +1 คน'}</button>
+        <div class="row">
+          <button class="btn ghost sm" id="rescan" type="button">อ่าน QR ซ้ำ</button>
+          <button class="btn ghost sm" id="resend" type="button" ${sc.lastReq?'':'disabled'}>ส่งซ้ำด้วย requestId เดิม</button>
+        </div>
+        <p class="req mono">requestId ถัดไป: ${sc.requestId}${sc.lastReq?` · ล่าสุด: ${sc.lastReq}`:''}</p>
+        ${logs.length ? `<div class="stack" style="gap:6px"><b style="font-size:.85rem">Log ล่าสุดของกลุ่มนี้</b><ul class="log">${logs.map(l=>`<li><span>เช็กอิน 1 คน · ${l.staff}</span><span class="muted num">${l.at}</span></li>`).join('')}</ul></div>` : ''}
+      </div>`;
+    }
+  }
+  const picks = S.bookings.map(b => `<button type="button" data-scan="${b.token}">${b.code} · ${esc(b.group.split('·')[0].trim())}</button>`).join('');
+  return `${head('staff','สแกนเช็กอิน','กล้องอ่าน QR ได้ไม่เท่ากับเช็กอินสำเร็จ เจ้าหน้าที่ต้องกด Confirm 1 ครั้งต่อ 1 คน')}
+  <section class="scanner">
+    <div class="vf"><i class="corner c1"></i><i class="corner c2"></i><i class="corner c3"></i><i class="corner c4"></i><i class="laser"></i>
+      <span>โหมดสาธิต: เลือก QR ตัวอย่างด้านล่าง หรือวาง Token<br><small style="opacity:.7">เวอร์ชัน Dev จะเปิดกล้องผ่าน HTTPS ด้วย html5-qrcode</small></span></div>
+    <form class="row" id="scanForm"><input id="tok" placeholder="RTB-XXXXXXXXXXXX" value="${esc(sc?sc.token:'')}" aria-label="QR Token"><button class="btn" type="submit">อ่าน QR</button></form>
+    <div class="picks">${picks}</div>
+  </section>
+  ${res || `<div class="card empty"><p>สแกน QR ของแขกเพื่อดูสิทธิ์คงเหลือ</p></div>`}`;
+};
+
+V.bookings = () => {
+  const rows = S.bookings.map(b => {
+    const t = tableOf(b.tableId);
+    return `<tr><td class="mono">${b.code}</td><td>${esc(b.group)}</td><td class="n">${pad2(t.no)}</td><td class="n">${b.seats}</td><td class="n">${baht(b.seats*S.event.price)}</td><td>${pill(b.status)}</td>
+      <td><div class="row" style="flex-wrap:nowrap;gap:6px">
+        ${b.status==='pending'?`<button class="btn sm accent" data-pay="${b.id}">ยืนยันชำระ</button>`:''}
+        ${b.status==='paid'?`<button class="btn sm ghost" data-unpay="${b.id}">เป็น Pending</button>`:''}
+        ${b.status!=='cancelled'?`<button class="btn sm ghost" data-cancel="${b.id}">ยกเลิก</button>`:`<button class="btn sm ghost" data-unpay="${b.id}">กู้คืน</button>`}
+        <button class="btn sm ghost" data-open="${b.id}">ตั๋ว</button>
+      </div></td></tr>`;
+  }).join('');
+  return `${head('bookings','รายการจอง','สลับสถานะ Pending / Paid / Cancelled (เฉพาะ Demo) การยกเลิกจะคืนที่นั่งให้โต๊ะ')}
+  <div class="tablewrap"><table><thead><tr><th>เลข</th><th>กลุ่ม</th><th class="n">โต๊ะ</th><th class="n">คน</th><th class="n">ยอด</th><th>สถานะ</th><th></th></tr></thead><tbody>${rows || `<tr><td colspan="7" class="muted">ยังไม่มีการจอง</td></tr>`}</tbody></table></div>`;
+};
+
+V.dashboard = () => {
+  const act = active(), paid = act.filter(b => b.status==='paid');
+  const bookedTables = S.tables.filter(t => taken(t.id) > 0).length;
+  const seats = act.reduce((a,b)=>a+b.seats,0), paidSeats = paid.reduce((a,b)=>a+b.seats,0);
+  const checked = S.logs.filter(l => paid.some(b => b.id===l.bookingId)).length;
+  const pending = act.filter(b => b.status==='pending');
+  const rows = act.map(b => { const u = usedOf(b.id); return `<tr><td>${esc(b.group)}</td><td class="n">${pad2(tableOf(b.tableId).no)}</td><td class="n">${b.seats}</td><td class="n">${u}</td><td class="n">${b.seats-u}</td><td><span class="minibar"><i style="width:${u/b.seats*100}%"></i></span></td><td>${pill(b.status)}</td></tr>`; }).join('');
+  const tmap = S.tables.map(t => { const k = taken(t.id); return `<div class="tm" title="โต๊ะ ${pad2(t.no)}: ${k}/${t.cap}"><i class="f" style="height:${k/t.cap*100}%"></i><span><b>${pad2(t.no)}</b>${k}/${t.cap}</span></div>`; }).join('');
+  const logs = S.logs.slice(-8).reverse().map(l => { const b = bookingOf(l.bookingId); return `<li><span>${b?esc(b.group):'-'} · +1</span><span class="muted num">${l.at}</span></li>`; }).join('');
+  return `${head('dashboard','Dashboard','ยอดเข้างานนับจาก Check-in Log ที่สำเร็จ ไม่ใช่จำนวนครั้งที่อ่าน QR')}
+  <div class="row" style="justify-content:space-between"><span class="muted" style="font-size:.84rem">${ui.refreshedAt ? 'อัปเดตล่าสุด ' + ui.refreshedAt : esc(S.event.name)}</span><button class="btn ghost sm" id="refresh" type="button">Refresh</button></div>
+  <div class="kpis">
+    <div class="stat"><div class="v">${bookedTables}<small> / ${S.tables.length}</small></div><div class="k">โต๊ะที่มีการจอง</div></div>
+    <div class="stat"><div class="v">${seats}<small> / ${S.tables.length*10}</small></div><div class="k">ที่นั่งที่จอง (${act.length} กลุ่ม)</div></div>
+    <div class="stat"><div class="v" style="color:var(--ok)">${checked}</div><div class="k">เข้างานแล้ว</div></div>
+    <div class="stat"><div class="v">${paidSeats-checked}</div><div class="k">ยังไม่มา (สิทธิ์ที่ชำระแล้ว)</div></div>
+    <div class="stat"><div class="v" style="color:var(--warn)">${pending.length}</div><div class="k">รอยืนยันชำระ · ${pending.reduce((a,b)=>a+b.seats,0)} ที่นั่ง</div></div>
+  </div>
+  <div class="stack" style="gap:8px"><h3>สรุปราย Group</h3>
+  <div class="tablewrap"><table><thead><tr><th>กลุ่ม</th><th class="n">โต๊ะ</th><th class="n">สิทธิ์</th><th class="n">มาแล้ว</th><th class="n">เหลือ</th><th></th><th>สถานะ</th></tr></thead><tbody>${rows || `<tr><td colspan="7" class="muted">ยังไม่มีการจอง</td></tr>`}</tbody></table></div></div>
+  <div class="card stack"><h3>ผังโต๊ะ (ที่นั่งที่จอง)</h3><div class="tmap num">${tmap}</div></div>
+  <div class="card stack"><h3>Check-in Log ล่าสุด</h3>${logs ? `<ul class="log">${logs}</ul>` : '<p class="muted">ยังไม่มีการเช็กอิน</p>'}</div>`;
+};
+
+/* ---------- render + events ---------- */
+function render(){
+  $('#nav').innerHTML = SCREENS.map(s => `<button type="button" class="chip" data-go="${s.id}" ${ui.view===s.id?'aria-current="page"':''}><b>${s.sid}</b>${s.name}<span class="role">${s.role}</span></button>`).join('');
+  $('#view').innerHTML = V[ui.view]();
+  const cur = $('#nav [aria-current]'); if(cur) cur.scrollIntoView({block:'nearest', inline:'nearest'});
+  if(ui.view === 'ticket'){
+    const b = bookingOf(ui.bookingId), el = $('#qr');
+    if(b && el && window.QRCode) new QRCode(el, {text:b.token, width:400, height:400, correctLevel:QRCode.CorrectLevel.M});
+    else if(el) el.innerHTML = `<p class="muted" style="color:#333;font-size:.8rem;padding:60px 10px;text-align:center">โหลดไลบรารี QR ไม่สำเร็จ<br>${b?b.token:''}</p>`;
+  }
+}
+
+function readDraft(){
+  const f = $('#bookForm'); if(!f) return;
+  ui.draft = {group:f.group.value, contact:f.contact.value, phone:f.phone.value, seats:parseInt(f.seats.value,10) || 0};
+}
+
+document.addEventListener('click', e => {
+  const el = e.target.closest('button'); if(!el) return;
+  const d = el.dataset;
+  if(d.go){ go(d.go); return; }
+  if(d.table){ ui.tableId = d.table; ui.draft = null; ui.errs = {}; go('form'); return; }
+  if(d.step){ readDraft(); const t = tableOf(ui.tableId), left = t.cap - taken(t.id); ui.draft.seats = Math.max(1, Math.min(left, (ui.draft.seats||0) + +d.step)); ui.errs = {}; render(); return; }
+  if(d.pay){ setStatus(d.pay,'paid'); toast('ยืนยันชำระแล้ว · QR เปิดใช้งาน'); render(); return; }
+  if(d.unpay){ setStatus(d.unpay,'pending'); toast('สถานะเป็น Pending'); render(); return; }
+  if(d.cancel){ setStatus(d.cancel,'cancelled'); toast('ยกเลิกแล้ว · คืนที่นั่งให้โต๊ะ'); render(); return; }
+  if(d.open){ ui.bookingId = d.open; go('ticket'); return; }
+  if(d.scan){ ui.scan = {token:d.scan, requestId:rid(), lastReq:null, msg:{k:'ok', t:'อ่าน QR แล้ว · ยังไม่นับเช็กอินจนกว่าจะกด Confirm'}}; render(); return; }
+  if(d.copy){
+    const done = () => toast('คัดลอก Token แล้ว');
+    try { navigator.clipboard.writeText(d.copy).then(done, () => toast('คัดลอกไม่ได้ เลือกข้อความแทน')); } catch(err) { toast('คัดลอกไม่ได้ เลือกข้อความแทน'); }
+    return;
+  }
+  if(el.id === 'confirm'){
+    const sc = ui.scan, r = confirmCheckin(sc.token, sc.requestId);
+    const M = {NOT_PAID:'ปฏิเสธ: ยังไม่ชำระเงิน', CANCELLED:'ปฏิเสธ: Booking ถูกยกเลิก', QUOTA_FULL:'ปฏิเสธ: สิทธิ์ครบแล้ว ห้ามเพิ่ม', DUPLICATE:'requestId ซ้ำ · ไม่เพิ่มยอด', NOT_FOUND:'ไม่พบ QR'};
+    if(r.ok){ sc.lastReq = sc.requestId; sc.requestId = rid(); sc.msg = {k:'ok', t:`เช็กอินสำเร็จ +1 คน · ใช้แล้ว ${r.used} คงเหลือ ${r.remaining}`}; }
+    else sc.msg = {k: r.code==='DUPLICATE' ? 'warn' : 'bad', t:M[r.code]};
+    render(); return;
+  }
+  if(el.id === 'resend'){
+    const sc = ui.scan, r = confirmCheckin(sc.token, sc.lastReq);
+    sc.msg = r.code === 'DUPLICATE' ? {k:'warn', t:`ส่งซ้ำด้วย ${sc.lastReq} · ระบบรับรู้ว่าบันทึกไปแล้ว ไม่เพิ่มยอด`} : {k:'bad', t:'ไม่สามารถส่งซ้ำได้'};
+    render(); return;
+  }
+  if(el.id === 'rescan'){ ui.scan.msg = {k:'ok', t:'อ่าน QR ซ้ำ · ยอดไม่เปลี่ยนจนกว่าจะกด Confirm'}; render(); return; }
+  if(el.id === 'refresh'){ const d2 = new Date(); ui.refreshedAt = `${pad2(d2.getHours())}:${pad2(d2.getMinutes())}:${pad2(d2.getSeconds())}`; render(); return; }
+  if(el.id === 'resetSeed'){ S = seed(true); save(); ui.scan = null; ui.bookingId = 'b1'; ui.tableId = null; toast('รีเซ็ตเป็นข้อมูลตัวอย่างแล้ว'); render(); return; }
+  if(el.id === 'resetEmpty'){ S = seed(false); save(); ui.scan = null; ui.bookingId = null; ui.tableId = null; toast('ล้างการจองทั้งหมดแล้ว'); render(); return; }
+});
+
+document.addEventListener('change', e => {
+  if(e.target.id === 'pick'){ ui.bookingId = e.target.value; render(); }
+});
+document.addEventListener('input', e => {
+  if(e.target.id === 'f_seats'){ const s = $('#sum'); if(s) s.textContent = baht((parseInt(e.target.value,10)||0) * S.event.price); }
+});
+
+document.addEventListener('submit', e => {
+  e.preventDefault();
+  if(e.target.id === 'scanForm'){
+    const v = $('#tok').value.trim();
+    if(!v){ toast('วาง Token หรือเลือก QR ตัวอย่างก่อน'); return; }
+    ui.scan = {token:v, requestId:rid(), lastReq:null, msg:{k:'ok', t:'อ่าน QR แล้ว · ยังไม่นับเช็กอินจนกว่าจะกด Confirm'}}; render(); return;
+  }
+  if(e.target.id === 'bookForm'){
+    readDraft();
+    const f = ui.draft, t = tableOf(ui.tableId), left = t.cap - taken(t.id), errs = {};
+    if(!f.group.trim()) errs.group = 'กรอกชื่อกลุ่ม';
+    if(!f.contact.trim()) errs.contact = 'กรอกชื่อผู้ติดต่อ';
+    if(!/^0\d{1,2}-?\d{3}-?\d{4}$/.test(f.phone.trim())) errs.phone = 'กรอกเบอร์โทร 9–10 หลัก เช่น 081-234-5678';
+    if(!(f.seats >= 1)) errs.seats = 'อย่างน้อย 1 คน';
+    else if(f.seats > left) errs.seats = `โต๊ะ ${pad2(t.no)} เหลือ ${left} ที่ จองเกินความจุไม่ได้`;
+    ui.errs = errs;
+    if(Object.keys(errs).length){ render(); return; }
+    const r = createBooking({group:f.group.trim(), contact:f.contact.trim(), phone:f.phone.trim(), tableId:t.id, seats:f.seats});
+    if(!r.ok){ ui.errs = {seats:r.error}; render(); return; }
+    ui.bookingId = r.booking.id; ui.draft = null; ui.tableId = null;
+    toast(`บันทึก ${r.booking.code} แล้ว · สถานะ Pending`); go('payment');
+  }
+});
+
+const h = location.hash.slice(1);
+const byHash = SCREENS.find(s => s.sid.toLowerCase() === h.toLowerCase() || s.id === h);
+if(byHash) ui.view = byHash.id;
+render();
+</script>
