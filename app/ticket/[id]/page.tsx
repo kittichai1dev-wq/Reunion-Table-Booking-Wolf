@@ -55,13 +55,14 @@ export default function TicketPage() {
         <div className="tb">
           <div className="row between" style={{ width: '100%' }}>
             <span className="mono">{t.code}</span>
-            <StatusPill payment={t.payment_status} status={t.status} />
+            <StatusPill payment={t.payment_status} status={t.status} free={t.is_free} />
           </div>
           <QrImage value={t.qr_token} locked={!paid} />
           <div className="perf" />
           <dl className="kv">
             <dt>กลุ่ม</dt><dd>{t.group_name}</dd>
-            <dt>โต๊ะ</dt><dd>{pad2(t.table_no)}</dd>
+            <dt>รุ่น</dt><dd>{t.class_no ?? '-'}</dd>
+            <dt>โต๊ะ</dt><dd>{t.table_no == null ? 'รอเจ้าหน้าที่จัดโต๊ะ' : pad2(t.table_no)}</dd>
             <dt>สิทธิ์เข้างาน</dt><dd className="num">{t.seat_count} คน</dd>
           </dl>
           <div className="meter">

@@ -24,6 +24,7 @@ API ตามเอกสารข้อ 8 ทำเป็น Postgres Function 
 
 1. **Supabase** > SQL Editor > วาง `supabase/schema.sql` ทั้งไฟล์ > Run
    แล้วรัน `supabase/test-acceptance.sql` ทีละบรรทัดเพื่อตรวจกติกา
+   แล้วรัน `supabase/migration-002-debsirin.sql` (เลือกรุ่น 70–134, ช่วงรุ่นฟรี, แนบสลิป, Admin จัดโต๊ะ, bucket `slips`)
 2. **Supabase** > Authentication
    - ปิด *Allow new users to sign up*
    - Users > Add user > สร้างบัญชี Staff/Admin (ติ๊ก Auto confirm)

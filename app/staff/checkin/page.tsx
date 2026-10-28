@@ -1,7 +1,7 @@
 'use client';
 import { useState, type FormEvent } from 'react';
 import { rpc } from '@/lib/supabase';
-import { ERROR_TEXT, newRequestId, pad2 } from '@/lib/format';
+import { ERROR_TEXT, newRequestId, tableLabel } from '@/lib/format';
 import type { ConfirmResult, ResolveResult } from '@/lib/types';
 import RequireStaff from '@/components/RequireStaff';
 import StatusPill from '@/components/StatusPill';
@@ -94,8 +94,8 @@ function CheckinScreen() {
       {scan && info && info.ok && (
         <div className={`result ${cls}`}>
           <div className="row between">
-            <div><h3>{info.group_name}</h3><span className="muted">{info.code} · โต๊ะ {pad2(info.table_no)}</span></div>
-            <StatusPill payment={info.payment_status} status={info.status} />
+            <div><h3>{info.group_name}</h3><span className="muted">{info.code}{info.class_no ? ` · รุ่น ${info.class_no}` : ''} · {tableLabel(info.table_no)}</span></div>
+            <StatusPill payment={info.payment_status} status={info.status} free={info.is_free} />
           </div>
           <div className="trio">
             <div><div className="v">{info.total}</div><div className="k">สิทธิ์รวม</div></div>

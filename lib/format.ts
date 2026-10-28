@@ -19,13 +19,24 @@ export function clock(d = new Date()) {
   return new Intl.DateTimeFormat('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: TZ }).format(d);
 }
 
-export function statusKey(payment: PaymentStatus, status: BookingStatus) {
-  return status === 'cancelled' ? 'cancelled' : payment;
+export function statusKey(payment: PaymentStatus, status: BookingStatus, isFree = false) {
+  if (status === 'cancelled') return 'cancelled';
+  return isFree ? 'free' : payment;
 }
-export const STATUS_LABEL: Record<string, string> = { paid: 'Paid', pending: 'Pending', cancelled: 'Cancelled' };
+export const STATUS_LABEL: Record<string, string> = { paid: 'Paid', pending: 'Pending', cancelled: 'Cancelled', free: 'ไม่ต้องชำระ' };
+
+export const tableLabel = (no: number | null) => (no == null ? 'รอจัดโต๊ะ' : `โต๊ะ ${pad2(no)}`);
+export const isFreeClass = (cls: number | null, from: number | null, to: number | null) =>
+  cls != null && from != null && to != null && cls >= from && cls <= to;
 
 export const ERROR_TEXT: Record<string, string> = {
   TABLE_FULL: 'โต๊ะนี้ที่นั่งไม่พอ',
+  EVENT_FULL: 'ที่นั่งของงานเต็มแล้ว',
+  INVALID_CLASS: 'เลือกรุ่นให้ถูกต้อง',
+  NO_EVENT: 'ยังไม่มีงานที่เปิดรับจอง',
+  INVALID_PATH: 'ไฟล์สลิปไม่ถูกต้อง',
+  NOT_PENDING: 'Booking นี้ไม่ได้อยู่ในสถานะรอชำระ',
+  INVALID_RANGE: 'ช่วงรุ่นไม่ถูกต้อง ต้องกรอกทั้งสองช่อง และรุ่นเริ่มต้องไม่มากกว่ารุ่นสุดท้าย',
   TABLE_NOT_FOUND: 'ไม่พบโต๊ะนี้',
   INVALID_SEATS: 'จำนวนคนต้องอย่างน้อย 1',
   MISSING_FIELDS: 'กรอกข้อมูลให้ครบ',

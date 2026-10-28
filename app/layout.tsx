@@ -9,10 +9,10 @@ const body = IBM_Plex_Sans_Thai({ subsets: ['latin', 'thai'], weight: ['400', '5
 const mono = IBM_Plex_Mono({ subsets: ['latin'], weight: ['500'], variable: '--font-mono' });
 
 export const metadata: Metadata = {
-  title: 'Reunion Table Booking',
-  description: 'จองโต๊ะงานเลี้ยงรุ่น · Group QR · เช็กอินหน้างาน',
+  title: 'เทพศิรินทร์ Reunion',
+  description: 'จองที่นั่งงานคืนสู่เหย้า โรงเรียนเทพศิรินทร์ · Group QR · เช็กอินหน้างาน',
 };
-export const viewport: Viewport = { width: 'device-width', initialScale: 1, themeColor: '#1d5c45' };
+export const viewport: Viewport = { width: 'device-width', initialScale: 1, themeColor: '#1b2a5c' };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

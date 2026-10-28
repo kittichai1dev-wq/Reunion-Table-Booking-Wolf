@@ -11,14 +11,13 @@ async function must<T>(p: PromiseLike<{ data: T | null; error: { message: string
 // Builds the 5-sheet summary workbook in the browser and downloads it
 export async function exportExcel() {
   const db = sb();
-  const [kpi, groups, tables, logs, event] = await Promise.all([
+  const [kpi, groups, tables, logs] = await Promise.all([
     must<DashboardKpi | null>(db.from('v_dashboard').select('*').limit(1).maybeSingle()),
     must<GroupSummary[]>(db.from('v_group_summary').select('*').order('code')),
     must<TableSummary[]>(db.from('v_table_summary').select('*').order('table_no')),
     must<CheckinLog[]>(db.from('checkin_logs').select('*').order('checked_in_at')),
-    must<{ price_per_seat: number } | null>(db.from('events').select('price_per_seat').limit(1).maybeSingle()),
   ]);
-  const price = event?.price_per_seat ?? 0;
+  const st = (x: GroupSummary) => STATUS_LABEL[statusKey(x.payment_status, x.status, x.is_free)];
   const byId = new Map(groups.map((g) => [g.booking_id, g]));
 
   const ExcelJS = (await import('exceljs')).default;
@@ -31,7 +30,7 @@ export async function exportExcel() {
     ws.columns = columns;
     const head = ws.getRow(1);
     head.font = { bold: true, color: { argb: 'FFFFFFFF' } };
-    head.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1D5C45' } };
+    head.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1B2A5C' } };
     return ws;
   };
 
@@ -43,26 +42,30 @@ export async function exportExcel() {
     { k: 'เวลาที่สร้างไฟล์', v: dateTime(new Date().toISOString()) },
     { k: 'โต๊ะทั้งหมด', v: kpi?.tables_total ?? 0 },
     { k: 'โต๊ะที่มีการจอง', v: kpi?.tables_booked ?? 0 },
+    { k: 'ที่นั่งทั้งหมด', v: kpi?.seats_total ?? 0 },
     { k: 'ที่นั่งที่จอง (ไม่รวมยกเลิก)', v: kpi?.seats_booked ?? 0 },
-    { k: 'ที่นั่งที่ชำระแล้ว', v: paidSeats },
+    { k: 'ที่นั่งที่ยืนยันแล้ว (รวมรุ่นที่ไม่ต้องชำระ)', v: paidSeats },
     { k: 'เข้างานแล้ว (จาก Check-in Log)', v: kpi?.checked_in ?? 0 },
-    { k: 'ยังไม่มา (สิทธิ์ที่ชำระแล้ว)', v: kpi?.not_arrived ?? 0 },
+    { k: 'ยังไม่มา (สิทธิ์ที่ยืนยันแล้ว)', v: kpi?.not_arrived ?? 0 },
     { k: 'กลุ่มที่รอยืนยันชำระ', v: kpi?.pending_groups ?? 0 },
-    { k: 'ยอดเงินที่ชำระแล้ว (บาท)', v: paidSeats * price },
+    { k: 'สลิปรอตรวจ', v: kpi?.slips_waiting ?? 0 },
+    { k: 'กลุ่มที่ยังไม่จัดโต๊ะ', v: kpi?.unassigned_groups ?? 0 },
+    { k: 'ยอดเงินที่ยืนยันแล้ว (บาท)', v: kpi?.paid_amount ?? 0 },
   ]);
   s.getColumn('v').alignment = { horizontal: 'left' };
 
   // 2) ราย Group
   const g = sheet('ราย Group', [
     { header: 'เลข Booking', key: 'code', width: 12 },
+    { header: 'รุ่น', key: 'cls', width: 7 },
     { header: 'กลุ่ม', key: 'group', width: 30 },
-    { header: 'โต๊ะ', key: 'table', width: 8 },
+    { header: 'โต๊ะ', key: 'table', width: 10 },
     { header: 'สิทธิ์', key: 'seats', width: 8 },
     { header: 'มาแล้ว', key: 'in', width: 8 },
     { header: 'ยังไม่มา', key: 'rem', width: 9 },
-    { header: 'สถานะ', key: 'st', width: 12 },
+    { header: 'สถานะ', key: 'st', width: 14 },
   ]);
-  groups.forEach((x) => g.addRow({ code: x.code, group: x.group_name, table: x.table_no, seats: x.seat_count, in: x.checked_in, rem: x.remaining, st: STATUS_LABEL[statusKey(x.payment_status, x.status)] }));
+  groups.forEach((x) => g.addRow({ code: x.code, cls: x.class_no, group: x.group_name, table: x.table_no ?? 'รอจัดโต๊ะ', seats: x.seat_count, in: x.checked_in, rem: x.remaining, st: st(x) }));
 
   // 3) รายโต๊ะ
   const t = sheet('รายโต๊ะ', [
@@ -77,19 +80,23 @@ export async function exportExcel() {
   // 4) รายการจอง (มีข้อมูลติดต่อ)
   const b = sheet('รายการจอง', [
     { header: 'เลข Booking', key: 'code', width: 12 },
+    { header: 'รุ่น', key: 'cls', width: 7 },
     { header: 'กลุ่ม', key: 'group', width: 30 },
     { header: 'ผู้ติดต่อ', key: 'contact', width: 22 },
     { header: 'โทรศัพท์', key: 'phone', width: 14 },
-    { header: 'โต๊ะ', key: 'table', width: 8 },
+    { header: 'โต๊ะ', key: 'table', width: 10 },
     { header: 'ที่นั่ง', key: 'seats', width: 8 },
     { header: 'ยอดเงิน (บาท)', key: 'amount', width: 14 },
-    { header: 'สถานะ', key: 'st', width: 12 },
+    { header: 'สถานะ', key: 'st', width: 14 },
+    { header: 'สลิป', key: 'slip', width: 10 },
+    { header: 'แนบสลิปเมื่อ', key: 'slipAt', width: 22 },
     { header: 'จองเมื่อ', key: 'created', width: 22 },
-    { header: 'ชำระเมื่อ', key: 'paid', width: 22 },
+    { header: 'ยืนยันเมื่อ', key: 'paid', width: 22 },
   ]);
   groups.forEach((x) => b.addRow({
-    code: x.code, group: x.group_name, contact: x.contact_name, phone: x.phone, table: x.table_no, seats: x.seat_count,
-    amount: x.seat_count * price, st: STATUS_LABEL[statusKey(x.payment_status, x.status)], created: dateTime(x.created_at), paid: dateTime(x.paid_at),
+    code: x.code, cls: x.class_no, group: x.group_name, contact: x.contact_name, phone: x.phone, table: x.table_no ?? 'รอจัดโต๊ะ',
+    seats: x.seat_count, amount: x.amount, st: st(x), slip: x.slip_path ? 'แนบแล้ว' : x.is_free ? '-' : 'ยังไม่แนบ',
+    slipAt: dateTime(x.slip_uploaded_at), created: dateTime(x.created_at), paid: dateTime(x.paid_at),
   }));
   b.getColumn('amount').numFmt = '#,##0';
 

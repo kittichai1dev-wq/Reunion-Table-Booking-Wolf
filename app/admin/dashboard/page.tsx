@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { sb } from '@/lib/supabase';
-import { clock, dateTime, pad2 } from '@/lib/format';
+import { baht, clock, dateTime, pad2 } from '@/lib/format';
 import type { CheckinLog, DashboardKpi, GroupSummary, TableSummary } from '@/lib/types';
 import RequireStaff from '@/components/RequireStaff';
 import StatusPill from '@/components/StatusPill';
@@ -24,7 +24,7 @@ function Dashboard() {
     const db = sb();
     const [k, g, t, l] = await Promise.all([
       db.from('v_dashboard').select('*').limit(1).maybeSingle(),
-      db.from('v_group_summary').select('*').eq('status', 'active').order('table_no').order('code'),
+      db.from('v_group_summary').select('*').eq('status', 'active').order('class_no').order('code'),
       db.from('v_table_summary').select('*').order('table_no'),
       db.from('checkin_logs').select('*').order('checked_in_at', { ascending: false }).limit(10),
     ]);
@@ -77,10 +77,12 @@ function Dashboard() {
       {kpi && (
         <div className="stats">
           <div className="stat"><div className="v">{kpi.tables_booked}<small> / {kpi.tables_total}</small></div><div className="k">โต๊ะที่มีการจอง</div></div>
-          <div className="stat"><div className="v">{kpi.seats_booked}<small> / {tables.reduce((a, t) => a + t.capacity, 0)}</small></div><div className="k">ที่นั่งที่จอง ({groups.length} กลุ่ม)</div></div>
+          <div className="stat"><div className="v">{kpi.seats_booked}<small> / {kpi.seats_total}</small></div><div className="k">ที่นั่งที่จอง ({groups.length} กลุ่ม)</div></div>
           <div className="stat"><div className="v" style={{ color: 'var(--ok)' }}>{kpi.checked_in}</div><div className="k">เข้างานแล้ว</div></div>
           <div className="stat"><div className="v">{kpi.not_arrived}</div><div className="k">ยังไม่มา (สิทธิ์ที่ชำระแล้ว)</div></div>
-          <div className="stat"><div className="v" style={{ color: 'var(--warn)' }}>{kpi.pending_groups}</div><div className="k">กลุ่มรอยืนยันชำระ</div></div>
+          <div className="stat"><div className="v" style={{ color: 'var(--warn)' }}>{kpi.slips_waiting}<small> / {kpi.pending_groups}</small></div><div className="k">สลิปรอตรวจ / กลุ่มรอชำระ</div></div>
+          <div className="stat"><div className="v">{kpi.unassigned_groups}</div><div className="k">กลุ่มที่ยังไม่จัดโต๊ะ</div></div>
+          <div className="stat"><div className="v">{baht(kpi.paid_amount)}</div><div className="k">ยอดเงินที่ยืนยันแล้ว</div></div>
         </div>
       )}
 
@@ -88,18 +90,19 @@ function Dashboard() {
         <div className="row between"><h3>สรุปราย Group</h3><Link className="btn ghost sm" href="/admin/bookings">จัดการรายการจอง</Link></div>
         <div className="tablewrap">
           <table>
-            <thead><tr><th>กลุ่ม</th><th className="n">โต๊ะ</th><th className="n">สิทธิ์</th><th className="n">มาแล้ว</th><th className="n">เหลือ</th><th /><th>สถานะ</th></tr></thead>
+            <thead><tr><th className="n">รุ่น</th><th>กลุ่ม</th><th className="n">โต๊ะ</th><th className="n">สิทธิ์</th><th className="n">มาแล้ว</th><th className="n">เหลือ</th><th /><th>สถานะ</th></tr></thead>
             <tbody>
-              {groups.length === 0 && <tr><td colSpan={7} className="muted">ยังไม่มีการจอง</td></tr>}
+              {groups.length === 0 && <tr><td colSpan={8} className="muted">ยังไม่มีการจอง</td></tr>}
               {groups.map((g) => (
                 <tr key={g.booking_id}>
+                  <td className="n">{g.class_no ?? '-'}</td>
                   <td>{g.group_name}</td>
-                  <td className="n">{pad2(g.table_no)}</td>
+                  <td className="n">{g.table_no == null ? <span className="muted">-</span> : pad2(g.table_no)}</td>
                   <td className="n">{g.seat_count}</td>
                   <td className="n">{g.checked_in}</td>
                   <td className="n">{g.remaining}</td>
                   <td><span className="minibar"><i style={{ width: `${(g.checked_in / g.seat_count) * 100}%` }} /></span></td>
-                  <td><StatusPill payment={g.payment_status} status={g.status} /></td>
+                  <td><StatusPill payment={g.payment_status} status={g.status} free={g.is_free} /></td>
                 </tr>
               ))}
             </tbody>

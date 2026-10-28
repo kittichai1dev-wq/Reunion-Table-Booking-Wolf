@@ -3,10 +3,11 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { sb } from '@/lib/supabase';
 import { useSession } from './useSession';
+import Rampoei from './Rampoei';
 
 const GUEST = [
   { href: '/', sid: 'S01', name: 'Home' },
-  { href: '/tables', sid: 'S02', name: 'เลือกโต๊ะ' },
+  { href: '/book', sid: 'S03', name: 'จองที่นั่ง' },
 ];
 const STAFF = [
   { href: '/staff/checkin', sid: 'S06', name: 'สแกนเช็กอิน' },
@@ -28,7 +29,7 @@ export default function Nav() {
   return (
     <header className="top">
       <div className="brandrow">
-        <Link href="/"><h1>Reunion Table Booking</h1></Link>
+        <Link href="/" className="brand"><Rampoei size={30} /><h1>เทพศิรินทร์ <span>Reunion</span></h1></Link>
         <span className="badge-demo">Demo</span>
         <span className="spacer" />
         <span className="who">
